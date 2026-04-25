@@ -1,0 +1,47 @@
+services:
+  - type: web
+    name: medico-app
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install && node src/config/migrate.js
+    startCommand: node src/app.js
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_HOST
+        fromDatabase:
+          name: medico-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: medico-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: medico-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: medico-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: medico-db
+          property: database
+      - key: JWT_SECRET
+        generateValue: true
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: IOT_API_KEY
+        value: medico-iot-key-2024
+
+databases:
+  - name: medico-db
+    databaseName: medico_db
+    user: medico_user
+    region: oregon
+    plan: free

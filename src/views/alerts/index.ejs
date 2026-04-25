@@ -1,0 +1,122 @@
+<%- include('../partials/head') %>
+<% const currentPage = 'alerts'; %>
+
+<div class="flex h-full">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0 lg:ml-64">
+    <%- include('../partials/topbar') %>
+    <main class="flex-1 p-4 sm:p-6 space-y-5 overflow-auto">
+      <%- include('../partials/flash') %>
+
+      <!-- Header row -->
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <a href="/alerts" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors <%= filter === 'all' ? 'bg-primary-600 text-white' : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50' %>">All Alerts</a>
+          <a href="/alerts?filter=unread" class="px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 <%= filter === 'unread' ? 'bg-primary-600 text-white' : 'bg-white border border-slate-300 text-slate-700 hover:bg-slate-50' %>">
+            Unread
+            <% if (unreadAlerts > 0) { %>
+            <span class="px-1.5 py-0.5 rounded-full text-xs font-bold <%= filter === 'unread' ? 'bg-white/20 text-white' : 'bg-red-100 text-red-700' %>"><%= unreadAlerts %></span>
+            <% } %>
+          </a>
+        </div>
+        <% if (unreadAlerts > 0) { %>
+        <form action="/alerts/read-all" method="POST">
+          <button type="submit" class="flex items-center gap-1.5 px-4 py-2 border border-slate-300 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+            Mark All Read
+          </button>
+        </form>
+        <% } %>
+      </div>
+
+      <!-- Alerts list -->
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <% if (alerts.length === 0) { %>
+        <div class="py-16 text-center text-slate-400">
+          <svg class="w-14 h-14 mx-auto mb-4 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+          </svg>
+          <p class="font-medium text-lg mb-1">No alerts</p>
+          <p class="text-sm"><%= filter === 'unread' ? 'All alerts have been read' : 'No health alerts yet' %></p>
+        </div>
+        <% } else { %>
+        <div class="divide-y divide-slate-100">
+          <% alerts.forEach(a => { %>
+          <div class="flex items-start gap-4 px-5 py-4 hover:bg-slate-50 transition-colors <%= !a.is_read ? 'bg-blue-50/40' : '' %>" id="alert-<%= a.id %>">
+            <!-- Alert type icon -->
+            <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 <%= !a.is_read ? 'bg-red-100' : 'bg-slate-100' %>">
+              <svg class="w-4 h-4 <%= !a.is_read ? 'text-red-600' : 'text-slate-400' %>" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"/>
+              </svg>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-start justify-between gap-1 mb-0.5">
+                <a href="/patients/<%= a.patient_id %>" class="font-semibold text-slate-900 hover:text-primary-600 text-sm"><%= a.patient_name %></a>
+                <span class="text-xs text-slate-400 whitespace-nowrap"><%= new Date(a.created_at).toLocaleString() %></span>
+              </div>
+              <p class="text-sm text-slate-600"><%= a.message %></p>
+              <div class="flex items-center gap-2 mt-1.5">
+                <span class="inline-block px-2 py-0.5 bg-slate-100 text-slate-600 text-xs font-medium rounded"><%= a.alert_type.replace(/_/g, ' ') %></span>
+                <% if (!a.is_read) { %>
+                <span class="inline-flex items-center gap-1 text-xs text-blue-600 font-medium">
+                  <span class="w-1.5 h-1.5 bg-blue-500 rounded-full"></span> Unread
+                </span>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Mark read button -->
+            <% if (!a.is_read) { %>
+            <button onclick="markRead(<%= a.id %>)" class="flex-shrink-0 p-1.5 text-slate-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Mark as read">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+            </button>
+            <% } %>
+          </div>
+          <% }) %>
+        </div>
+
+        <!-- Pagination -->
+        <% if (totalPages > 1) { %>
+        <div class="flex items-center justify-between px-5 py-3 border-t border-slate-100 bg-slate-50">
+          <% if (currentPage > 1) { %>
+          <a href="?page=<%= currentPage - 1 %>&filter=<%= filter %>" class="flex items-center gap-1 text-sm text-primary-600 font-medium hover:underline">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/></svg>
+            Previous
+          </a>
+          <% } else { %><span></span><% } %>
+          <span class="text-xs text-slate-500">Page <%= currentPage %> of <%= totalPages %></span>
+          <% if (currentPage < totalPages) { %>
+          <a href="?page=<%= currentPage + 1 %>&filter=<%= filter %>" class="flex items-center gap-1 text-sm text-primary-600 font-medium hover:underline">
+            Next
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+          </a>
+          <% } else { %><span></span><% } %>
+        </div>
+        <% } %>
+        <% } %>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+async function markRead(id) {
+  const res = await fetch(`/alerts/${id}/read`, { method: 'POST' });
+  if (res.ok) {
+    const el = document.getElementById(`alert-${id}`);
+    el.classList.remove('bg-blue-50/40');
+    const dot = el.querySelector('.bg-blue-500');
+    if (dot) dot.closest('span')?.remove();
+    const btn = el.querySelector('button');
+    if (btn) btn.remove();
+    const iconDiv = el.querySelector('.bg-red-100');
+    if (iconDiv) { iconDiv.classList.remove('bg-red-100'); iconDiv.classList.add('bg-slate-100'); }
+    const svg = el.querySelector('svg');
+    if (svg) { svg.classList.remove('text-red-600'); svg.classList.add('text-slate-400'); }
+  }
+}
+</script>
+
+<%- include('../partials/footer') %>

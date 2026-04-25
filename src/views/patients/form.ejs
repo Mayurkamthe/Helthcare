@@ -1,0 +1,110 @@
+<%- include('../partials/head') %>
+<% const currentPage = 'patients'; %>
+
+<div class="flex h-full">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0 lg:ml-64">
+    <%- include('../partials/topbar') %>
+    <main class="flex-1 p-4 sm:p-6 overflow-auto">
+      <%- include('../partials/flash') %>
+
+      <!-- Breadcrumb -->
+      <div class="flex items-center gap-2 text-sm text-slate-500 mb-5">
+        <a href="/patients" class="hover:text-primary-600">Patients</a>
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+        <span class="text-slate-800 font-medium"><%= patient ? 'Edit Patient' : 'Add Patient' %></span>
+      </div>
+
+      <div class="bg-white rounded-xl border border-slate-200 max-w-2xl">
+        <div class="px-6 py-5 border-b border-slate-100">
+          <h2 class="font-semibold text-slate-900"><%= patient ? 'Edit Patient Record' : 'Add New Patient' %></h2>
+          <p class="text-sm text-slate-500 mt-0.5"><%= patient ? 'Update patient information' : 'Enter patient details to create a new record' %></p>
+        </div>
+
+        <form action="<%= patient ? '/patients/' + patient.id + '/edit' : '/patients' %>" method="POST" class="px-6 py-6 space-y-5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <!-- Full Name -->
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Full Name *</label>
+              <input type="text" name="full_name" value="<%= values && values.full_name ? values.full_name : '' %>"
+                class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="John Smith" required>
+            </div>
+
+            <!-- Date of Birth -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Date of Birth</label>
+              <input type="date" name="date_of_birth"
+                value="<%= values && values.date_of_birth ? (values.date_of_birth instanceof Date ? values.date_of_birth.toISOString().split('T')[0] : String(values.date_of_birth).split('T')[0]) : '' %>"
+                class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white">
+            </div>
+
+            <!-- Gender -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Gender *</label>
+              <select name="gender" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white" required>
+                <option value="">Select gender</option>
+                <option value="Male" <%= values && values.gender === 'Male' ? 'selected' : '' %>>Male</option>
+                <option value="Female" <%= values && values.gender === 'Female' ? 'selected' : '' %>>Female</option>
+                <option value="Other" <%= values && values.gender === 'Other' ? 'selected' : '' %>>Other</option>
+              </select>
+            </div>
+
+            <!-- Blood Type -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Blood Type</label>
+              <select name="blood_type" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white">
+                <option value="">Select</option>
+                <% ['A+','A-','B+','B-','AB+','AB-','O+','O-'].forEach(bt => { %>
+                <option value="<%= bt %>" <%= values && values.blood_type === bt ? 'selected' : '' %>><%= bt %></option>
+                <% }) %>
+              </select>
+            </div>
+
+            <!-- Phone -->
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Phone Number</label>
+              <input type="tel" name="phone_number" value="<%= values && values.phone_number ? values.phone_number : '' %>"
+                class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="+1-555-0100">
+            </div>
+
+            <!-- Emergency Contact -->
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Emergency Contact</label>
+              <input type="text" name="emergency_contact" value="<%= values && values.emergency_contact ? values.emergency_contact : '' %>"
+                class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="Name & phone number">
+            </div>
+
+            <!-- Address -->
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Address</label>
+              <input type="text" name="address" value="<%= values && values.address ? values.address : '' %>"
+                class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                placeholder="123 Main St, City, State">
+            </div>
+
+            <!-- Medical Notes -->
+            <div class="sm:col-span-2">
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Medical Notes</label>
+              <textarea name="medical_notes" rows="3"
+                class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                placeholder="Allergies, chronic conditions, current medications..."><%= values && values.medical_notes ? values.medical_notes : '' %></textarea>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex items-center gap-3 pt-2 border-t border-slate-100">
+            <button type="submit" class="bg-primary-600 hover:bg-primary-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors">
+              <%= patient ? 'Save Changes' : 'Add Patient' %>
+            </button>
+            <a href="<%= patient ? '/patients/' + patient.id : '/patients' %>" class="px-5 py-2.5 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50 transition-colors">Cancel</a>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,127 @@
+<%- include('../partials/head') %>
+<% const currentPage = 'patients'; %>
+
+<div class="flex h-full">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0 lg:ml-64">
+    <%- include('../partials/topbar') %>
+    <main class="flex-1 p-4 sm:p-6 space-y-5 overflow-auto">
+      <%- include('../partials/flash') %>
+
+      <!-- Breadcrumb -->
+      <div class="flex items-center gap-2 text-sm text-slate-500">
+        <a href="/patients" class="hover:text-primary-600">Patients</a>
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+        <a href="/patients/<%= patient.id %>" class="hover:text-primary-600"><%= patient.full_name %></a>
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+        <span class="font-medium text-slate-800">Vital History</span>
+      </div>
+
+      <!-- Stats mini -->
+      <% if (vitals.length > 0) { %>
+      <% const avgHR = Math.round(vitals.reduce((s,v) => s + (v.heart_rate||0), 0) / vitals.filter(v=>v.heart_rate).length); %>
+      <% const avgSpo2 = Math.round(vitals.reduce((s,v) => s + (v.spo2||0), 0) / vitals.filter(v=>v.spo2).length); %>
+      <% const avgTemp = (vitals.reduce((s,v) => s + parseFloat(v.temperature||0), 0) / vitals.filter(v=>v.temperature).length).toFixed(1); %>
+      <div class="grid grid-cols-3 gap-4">
+        <div class="bg-white border border-slate-200 rounded-xl p-4 text-center">
+          <p class="text-xs text-slate-500 font-medium mb-1">Avg Heart Rate</p>
+          <p class="text-2xl font-bold text-slate-900"><%= avgHR %></p>
+          <p class="text-xs text-slate-400">bpm</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 text-center">
+          <p class="text-xs text-slate-500 font-medium mb-1">Avg SpO2</p>
+          <p class="text-2xl font-bold text-slate-900"><%= avgSpo2 %></p>
+          <p class="text-xs text-slate-400">percent</p>
+        </div>
+        <div class="bg-white border border-slate-200 rounded-xl p-4 text-center">
+          <p class="text-xs text-slate-500 font-medium mb-1">Avg Temp</p>
+          <p class="text-2xl font-bold text-slate-900"><%= avgTemp %></p>
+          <p class="text-xs text-slate-400">°C</p>
+        </div>
+      </div>
+      <% } %>
+
+      <!-- Table -->
+      <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <h2 class="font-semibold text-slate-900">Vital Readings - <%= patient.full_name %></h2>
+          <span class="text-xs text-slate-400">Page <%= currentPage %> of <%= totalPages %></span>
+        </div>
+        <% if (vitals.length === 0) { %>
+        <div class="py-12 text-center text-slate-400">
+          <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75Z"/>
+          </svg>
+          <p class="font-medium">No vital readings recorded</p>
+        </div>
+        <% } else { %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-left">
+                <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Date/Time</th>
+                <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Heart Rate</th>
+                <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">SpO2</th>
+                <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Temperature</th>
+                <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Device</th>
+                <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <% vitals.forEach(v => { %>
+              <% const hasAnomaly = (v.heart_rate && (v.heart_rate > 100 || v.heart_rate < 50)) || (v.spo2 && v.spo2 < 95) || (v.temperature && (parseFloat(v.temperature) >= 38 || parseFloat(v.temperature) < 35)); %>
+              <tr class="hover:bg-slate-50 <%= hasAnomaly ? 'bg-red-50/30' : '' %>">
+                <td class="px-5 py-3.5 text-xs text-slate-600 whitespace-nowrap"><%= new Date(v.recorded_at).toLocaleString() %></td>
+                <td class="px-5 py-3.5">
+                  <% if (v.heart_rate) { %>
+                  <span class="vital-badge <%= v.heart_rate > 100 || v.heart_rate < 50 ? 'vital-critical' : 'vital-normal' %>"><%= v.heart_rate %> bpm</span>
+                  <% } else { %><span class="text-slate-300">--</span><% } %>
+                </td>
+                <td class="px-5 py-3.5">
+                  <% if (v.spo2) { %>
+                  <span class="vital-badge <%= v.spo2 < 95 ? 'vital-critical' : v.spo2 < 97 ? 'vital-warning' : 'vital-normal' %>"><%= v.spo2 %>%</span>
+                  <% } else { %><span class="text-slate-300">--</span><% } %>
+                </td>
+                <td class="px-5 py-3.5">
+                  <% if (v.temperature) { %>
+                  <span class="vital-badge <%= parseFloat(v.temperature) >= 38 ? 'vital-critical' : parseFloat(v.temperature) < 35 ? 'vital-critical' : 'vital-normal' %>"><%= parseFloat(v.temperature).toFixed(1) %>°C</span>
+                  <% } else { %><span class="text-slate-300">--</span><% } %>
+                </td>
+                <td class="px-5 py-3.5 text-xs font-mono text-slate-400 hidden sm:table-cell"><%= v.device_id || '--' %></td>
+                <td class="px-5 py-3.5">
+                  <% if (hasAnomaly) { %>
+                  <span class="vital-badge vital-critical">Abnormal</span>
+                  <% } else { %>
+                  <span class="vital-badge vital-normal">Normal</span>
+                  <% } %>
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+        <!-- Pagination -->
+        <% if (totalPages > 1) { %>
+        <div class="flex items-center justify-between px-5 py-3 border-t border-slate-100 bg-slate-50">
+          <% if (currentPage > 1) { %>
+          <a href="?page=<%= currentPage - 1 %>" class="flex items-center gap-1 text-sm text-primary-600 font-medium hover:underline">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/></svg>
+            Previous
+          </a>
+          <% } else { %><span></span><% } %>
+          <span class="text-xs text-slate-500">Page <%= currentPage %> of <%= totalPages %></span>
+          <% if (currentPage < totalPages) { %>
+          <a href="?page=<%= currentPage + 1 %>" class="flex items-center gap-1 text-sm text-primary-600 font-medium hover:underline">
+            Next
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+          </a>
+          <% } else { %><span></span><% } %>
+        </div>
+        <% } %>
+        <% } %>
+      </div>
+    </main>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

@@ -1,0 +1,126 @@
+<%- include('../partials/head') %>
+<% const currentPage = 'profile'; %>
+
+<div class="flex h-full">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0 lg:ml-64">
+    <%- include('../partials/topbar') %>
+    <main class="flex-1 p-4 sm:p-6 space-y-6 overflow-auto">
+      <%- include('../partials/flash') %>
+
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-4xl">
+        <!-- Profile Info -->
+        <div class="bg-white rounded-xl border border-slate-200">
+          <div class="flex items-center gap-4 px-6 py-5 border-b border-slate-100">
+            <div class="w-14 h-14 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-xl">
+              <%= doctor.full_name.charAt(0).toUpperCase() %>
+            </div>
+            <div>
+              <h2 class="font-bold text-slate-900 text-lg"><%= doctor.full_name %></h2>
+              <p class="text-sm text-slate-500"><%= doctor.specialization || 'Medical Professional' %></p>
+            </div>
+          </div>
+          <form action="/profile/update" method="POST" class="px-6 py-5 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Full Name *</label>
+              <input type="text" name="full_name" value="<%= doctor.full_name %>"
+                class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Email *</label>
+              <input type="email" name="email" value="<%= doctor.email %>"
+                class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Specialization</label>
+              <select name="specialization" class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+                <option value="">Select...</option>
+                <% ['General Practice','Internal Medicine','Cardiology','Pulmonology','Neurology','Pediatrics','Emergency Medicine','Other'].forEach(s => { %>
+                <option value="<%= s %>" <%= doctor.specialization === s ? 'selected' : '' %>><%= s %></option>
+                <% }) %>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">License Number</label>
+              <input type="text" name="license_number" value="<%= doctor.license_number || '' %>"
+                class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="LIC-2024-001">
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Phone</label>
+              <input type="tel" name="phone_number" value="<%= doctor.phone_number || '' %>"
+                class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="+1-555-0100">
+            </div>
+            <div class="pt-2">
+              <button type="submit" class="w-full bg-primary-600 hover:bg-primary-700 text-white py-2.5 rounded-lg text-sm font-semibold transition-colors">Save Changes</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Change Password -->
+        <div class="bg-white rounded-xl border border-slate-200">
+          <div class="px-6 py-5 border-b border-slate-100">
+            <h2 class="font-semibold text-slate-900">Change Password</h2>
+            <p class="text-sm text-slate-500 mt-0.5">Update your account password</p>
+          </div>
+          <form action="/profile/change-password" method="POST" class="px-6 py-5 space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Current Password *</label>
+              <input type="password" name="current_password"
+                class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">New Password *</label>
+              <input type="password" name="new_password"
+                class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" placeholder="Min. 6 characters" required>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-slate-700 mb-1.5">Confirm New Password</label>
+              <input type="password" name="confirm_password"
+                class="w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500" required>
+            </div>
+            <div class="pt-2">
+              <button type="submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-2.5 rounded-lg text-sm font-semibold transition-colors">Update Password</button>
+            </div>
+          </form>
+
+          <!-- Account Info -->
+          <div class="px-6 pb-5 pt-2 border-t border-slate-100">
+            <h3 class="font-medium text-slate-700 text-sm mb-3">Account Details</h3>
+            <dl class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <dt class="text-slate-500">License #</dt>
+                <dd class="font-medium text-slate-900"><%= doctor.license_number || 'Not set' %></dd>
+              </div>
+              <div class="flex justify-between">
+                <dt class="text-slate-500">Member since</dt>
+                <dd class="font-medium text-slate-900"><%= new Date(doctor.created_at).toLocaleDateString('en-US', {year:'numeric', month:'long'}) %></dd>
+              </div>
+            </dl>
+          </div>
+        </div>
+
+        <!-- API Info -->
+        <div class="lg:col-span-2 bg-slate-900 rounded-xl border border-slate-700 p-6">
+          <h3 class="font-semibold text-white mb-2">IoT Device Integration</h3>
+          <p class="text-sm text-slate-400 mb-4">Use this endpoint and API key to connect your ESP32 or other IoT devices.</p>
+          <div class="space-y-3">
+            <div class="bg-slate-800 rounded-lg p-3">
+              <p class="text-xs text-slate-500 mb-1 font-mono">POST Endpoint</p>
+              <code class="text-green-400 text-sm font-mono">http://YOUR_SERVER/api/iot/vitals</code>
+            </div>
+            <div class="bg-slate-800 rounded-lg p-3">
+              <p class="text-xs text-slate-500 mb-1 font-mono">Request Header</p>
+              <code class="text-green-400 text-sm font-mono">X-API-Key: medico-iot-key-2024</code>
+            </div>
+            <div class="bg-slate-800 rounded-lg p-3">
+              <p class="text-xs text-slate-500 mb-1 font-mono">JSON Body</p>
+              <pre class="text-green-400 text-xs font-mono leading-relaxed">{"deviceId": "ESP32-001", "heartRate": 75, "spo2": 98, "temperature": 36.6}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

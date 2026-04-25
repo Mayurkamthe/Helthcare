@@ -1,0 +1,222 @@
+<%- include('../partials/head') %>
+<% const currentPage = 'dashboard'; %>
+
+<div class="flex h-full">
+  <%- include('../partials/sidebar') %>
+
+  <div class="flex-1 flex flex-col min-w-0 lg:ml-64">
+    <%- include('../partials/topbar') %>
+
+    <main class="flex-1 p-4 sm:p-6 space-y-6 overflow-auto">
+      <%- include('../partials/flash') %>
+
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-lg bg-primary-50 flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-slate-500 font-medium">Total Patients</p>
+            <p class="text-3xl font-bold text-slate-900"><%= totalPatients %></p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.288 15.038a5.25 5.25 0 0 1 7.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 0 1 1.06 0Z"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-slate-500 font-medium">Active Devices</p>
+            <p class="text-3xl font-bold text-slate-900"><%= activeDevices %></p>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 p-5 flex items-center gap-4">
+          <div class="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
+            <svg class="w-6 h-6 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-slate-500 font-medium">Unread Alerts</p>
+            <p class="text-3xl font-bold text-slate-900"><%= unreadAlerts %></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main content grid -->
+      <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <!-- Patient Table -->
+        <div class="xl:col-span-2 bg-white rounded-xl border border-slate-200">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <h2 class="font-semibold text-slate-900">Recent Patients</h2>
+            <a href="/patients" class="text-sm text-primary-600 font-medium hover:underline">View all</a>
+          </div>
+          <div class="overflow-x-auto">
+            <% if (patients.length === 0) { %>
+            <div class="p-8 text-center text-slate-400">
+              <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/>
+              </svg>
+              <p class="font-medium">No patients yet</p>
+              <a href="/patients/new" class="mt-2 inline-block text-primary-600 text-sm hover:underline">Add your first patient</a>
+            </div>
+            <% } else { %>
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-slate-50 text-left">
+                  <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Patient</th>
+                  <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">HR</th>
+                  <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">SpO2</th>
+                  <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden lg:table-cell">Temp</th>
+                  <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <% patients.forEach(p => { %>
+                <tr class="hover:bg-slate-50 transition-colors cursor-pointer" onclick="location.href='/patients/<%= p.id %>'">
+                  <td class="px-5 py-3.5">
+                    <div class="flex items-center gap-3">
+                      <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center text-slate-600 font-semibold text-xs flex-shrink-0">
+                        <%= p.full_name.charAt(0).toUpperCase() %>
+                      </div>
+                      <div>
+                        <p class="font-medium text-slate-900"><%= p.full_name %></p>
+                        <p class="text-xs text-slate-400"><%= p.gender || '' %> &bull; <%= p.blood_type || 'N/A' %></p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-5 py-3.5 hidden md:table-cell">
+                    <% if (p.last_hr) { %>
+                      <span class="vital-badge <%= p.last_hr > 100 || p.last_hr < 50 ? 'vital-critical' : 'vital-normal' %>">
+                        <%= p.last_hr %> bpm
+                      </span>
+                    <% } else { %><span class="text-slate-300">--</span><% } %>
+                  </td>
+                  <td class="px-5 py-3.5 hidden md:table-cell">
+                    <% if (p.last_spo2) { %>
+                      <span class="vital-badge <%= p.last_spo2 < 95 ? 'vital-critical' : p.last_spo2 < 97 ? 'vital-warning' : 'vital-normal' %>">
+                        <%= p.last_spo2 %>%
+                      </span>
+                    <% } else { %><span class="text-slate-300">--</span><% } %>
+                  </td>
+                  <td class="px-5 py-3.5 hidden lg:table-cell">
+                    <% if (p.last_temp) { %>
+                      <span class="vital-badge <%= parseFloat(p.last_temp) >= 38 ? 'vital-critical' : parseFloat(p.last_temp) < 35 ? 'vital-critical' : 'vital-normal' %>">
+                        <%= parseFloat(p.last_temp).toFixed(1) %>°C
+                      </span>
+                    <% } else { %><span class="text-slate-300">--</span><% } %>
+                  </td>
+                  <td class="px-5 py-3.5">
+                    <% if (p.device_id) { %>
+                    <span class="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-1 rounded-full">
+                      <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Connected
+                    </span>
+                    <% } else { %>
+                    <span class="inline-flex items-center gap-1 text-xs font-medium text-slate-500 bg-slate-100 px-2 py-1 rounded-full">
+                      <span class="w-1.5 h-1.5 bg-slate-400 rounded-full"></span> No device
+                    </span>
+                    <% } %>
+                  </td>
+                </tr>
+                <% }) %>
+              </tbody>
+            </table>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Alerts Panel -->
+        <div class="bg-white rounded-xl border border-slate-200">
+          <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+            <h2 class="font-semibold text-slate-900">Recent Alerts</h2>
+            <a href="/alerts" class="text-sm text-primary-600 font-medium hover:underline">View all</a>
+          </div>
+          <div class="divide-y divide-slate-100">
+            <% if (alerts.length === 0) { %>
+            <div class="p-6 text-center text-slate-400">
+              <svg class="w-10 h-10 mx-auto mb-2 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
+              </svg>
+              <p class="text-sm font-medium">No alerts</p>
+            </div>
+            <% } else { %>
+            <% alerts.forEach(a => { %>
+            <div class="px-5 py-3.5 hover:bg-slate-50 transition-colors">
+              <div class="flex items-start gap-3">
+                <div class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 <%= a.is_read ? 'bg-slate-300' : 'bg-red-500' %>"></div>
+                <div class="min-w-0">
+                  <p class="text-xs font-semibold text-slate-600 truncate"><%= a.patient_name %></p>
+                  <p class="text-xs text-slate-500 mt-0.5 line-clamp-2"><%= a.message %></p>
+                  <p class="text-xs text-slate-400 mt-1"><%= new Date(a.created_at).toLocaleString() %></p>
+                </div>
+              </div>
+            </div>
+            <% }) %>
+            <% } %>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Vitals -->
+      <% if (recentVitals.length > 0) { %>
+      <div class="bg-white rounded-xl border border-slate-200">
+        <div class="px-5 py-4 border-b border-slate-100">
+          <h2 class="font-semibold text-slate-900">Latest Vital Readings</h2>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-slate-50 text-left">
+                <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Patient</th>
+                <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Heart Rate</th>
+                <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">SpO2</th>
+                <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Temperature</th>
+                <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:table-cell">Device</th>
+                <th class="px-5 py-3 text-xs font-semibold text-slate-500 uppercase tracking-wider hidden md:table-cell">Time</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <% recentVitals.forEach(v => { %>
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-5 py-3 font-medium text-slate-900"><%= v.patient_name %></td>
+                <td class="px-5 py-3">
+                  <% if (v.heart_rate) { %>
+                  <span class="vital-badge <%= v.heart_rate > 100 || v.heart_rate < 50 ? 'vital-critical' : 'vital-normal' %>">
+                    <%= v.heart_rate %> bpm
+                  </span>
+                  <% } else { %><span class="text-slate-300">--</span><% } %>
+                </td>
+                <td class="px-5 py-3">
+                  <% if (v.spo2) { %>
+                  <span class="vital-badge <%= v.spo2 < 95 ? 'vital-critical' : v.spo2 < 97 ? 'vital-warning' : 'vital-normal' %>">
+                    <%= v.spo2 %>%
+                  </span>
+                  <% } else { %><span class="text-slate-300">--</span><% } %>
+                </td>
+                <td class="px-5 py-3">
+                  <% if (v.temperature) { %>
+                  <span class="vital-badge <%= parseFloat(v.temperature) >= 38 ? 'vital-critical' : 'vital-normal' %>">
+                    <%= parseFloat(v.temperature).toFixed(1) %>°C
+                  </span>
+                  <% } else { %><span class="text-slate-300">--</span><% } %>
+                </td>
+                <td class="px-5 py-3 text-slate-500 hidden sm:table-cell"><%= v.device_id || '--' %></td>
+                <td class="px-5 py-3 text-slate-400 text-xs hidden md:table-cell"><%= new Date(v.recorded_at).toLocaleString() %></td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <% } %>
+    </main>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>

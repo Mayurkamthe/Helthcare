@@ -1,0 +1,63 @@
+<%- include('../partials/head') %>
+
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <!-- Logo -->
+    <div class="flex items-center justify-center gap-3 mb-8">
+      <div class="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12h15m-7.5-7.5v15"/>
+        </svg>
+      </div>
+      <span class="text-white font-bold text-3xl tracking-tight">Medico</span>
+    </div>
+
+    <!-- Card -->
+    <div class="bg-white rounded-2xl shadow-2xl p-8">
+      <h2 class="text-2xl font-bold text-slate-900 mb-1">Welcome back</h2>
+      <p class="text-slate-500 text-sm mb-6">Sign in to your medical dashboard</p>
+
+      <%- include('../partials/flash') %>
+
+      <form action="/auth/login" method="POST" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5" for="email">Email Address</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"/></svg>
+            </span>
+            <input type="email" id="email" name="email" value="<%= typeof values !== 'undefined' && values.email ? values.email : '' %>"
+              class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              placeholder="doctor@hospital.com" autocomplete="email" required>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1.5" for="password">Password</label>
+          <div class="relative">
+            <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+            </span>
+            <input type="password" id="password" name="password"
+              class="w-full pl-10 pr-4 py-2.5 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              placeholder="••••••••" autocomplete="current-password" required>
+          </div>
+        </div>
+
+        <button type="submit"
+          class="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm mt-2">
+          Sign In
+        </button>
+      </form>
+
+      <p class="mt-6 text-center text-sm text-slate-500">
+        Don't have an account?
+        <a href="/auth/register" class="text-primary-600 font-semibold hover:underline">Create account</a>
+      </p>
+    </div>
+
+    <p class="mt-6 text-center text-xs text-slate-400">Medico Medical IoT Monitoring System</p>
+  </div>
+</div>
+
+<%- include('../partials/footer') %>
