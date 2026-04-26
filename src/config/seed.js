@@ -1,72 +1,42 @@
+'use strict';
 require('dotenv').config();
 const bcrypt = require('bcryptjs');
-const db = require('./db');
+const { syncDatabase, Doctor, Patient, VitalReading, HealthAlert } = require('../models');
 
 async function seed() {
-  console.log('[SEED] Starting seed...');
+  await syncDatabase();
+  console.log('[SEED] Seeding...');
 
-  // Create demo doctor
   const hash = await bcrypt.hash('password123', 10);
-  const [existing] = await db.query('SELECT id FROM doctors WHERE email = ?', ['demo@medico.com']);
+  let [doc, created] = await Doctor.findOrCreate({
+    where: { email: 'demo@medico.com' },
+    defaults: { password: hash, full_name: 'Dr. Sarah Johnson', specialization: 'Internal Medicine', license_number: 'LIC-2024-001', phone_number: '+1-555-0100' }
+  });
+  if (created) console.log('[SEED] Doctor created: demo@medico.com / password123');
+  else console.log('[SEED] Doctor already exists');
 
-  let doctorId;
-  if (existing.length === 0) {
-    const [result] = await db.query(
-      `INSERT INTO doctors (email, password, full_name, specialization, license_number, phone_number)
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      ['demo@medico.com', hash, 'Dr. Sarah Johnson', 'Internal Medicine', 'LIC-2024-001', '+1-555-0100']
-    );
-    doctorId = result.insertId;
-    console.log('[SEED] Demo doctor created: demo@medico.com / password123');
-  } else {
-    doctorId = existing[0].id;
-    console.log('[SEED] Demo doctor already exists');
-  }
-
-  // Create sample patients
   const patients = [
-    { name: 'James Wilson', dob: '1975-03-15', gender: 'Male', blood: 'O+', phone: '+1-555-0201', device: 'ESP32-001' },
-    { name: 'Maria Garcia', dob: '1988-07-22', gender: 'Female', blood: 'A-', phone: '+1-555-0202', device: 'ESP32-002' },
-    { name: 'Robert Chen', dob: '1962-11-08', gender: 'Male', blood: 'B+', phone: '+1-555-0203', device: null },
+    { full_name: 'James Wilson',  date_of_birth: '1975-03-15', gender: 'Male',   blood_type: 'O+', phone_number: '+1-555-0201', device_id: 'ESP32-001' },
+    { full_name: 'Maria Garcia',  date_of_birth: '1988-07-22', gender: 'Female', blood_type: 'A-', phone_number: '+1-555-0202', device_id: 'ESP32-002' },
+    { full_name: 'Robert Chen',   date_of_birth: '1962-11-08', gender: 'Male',   blood_type: 'B+', phone_number: '+1-555-0203', device_id: null }
   ];
 
-  for (const p of patients) {
-    const [exists] = await db.query('SELECT id FROM patients WHERE full_name = ? AND doctor_id = ?', [p.name, doctorId]);
-    if (exists.length === 0) {
-      const [res] = await db.query(
-        `INSERT INTO patients (doctor_id, full_name, date_of_birth, gender, blood_type, phone_number, device_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?)`,
-        [doctorId, p.name, p.dob, p.gender, p.blood, p.phone, p.device]
-      );
-
-      // Add some vitals for this patient
-      const patientId = res.insertId;
-      for (let i = 10; i >= 0; i--) {
-        const hr = 72 + Math.floor(Math.random() * 20) - 10;
-        const spo2 = 96 + Math.floor(Math.random() * 4);
-        const temp = 36.5 + (Math.random() * 2 - 0.5);
-        await db.query(
-          `INSERT INTO vital_readings (patient_id, device_id, heart_rate, spo2, temperature, recorded_at)
-           VALUES (?, ?, ?, ?, ?, DATE_SUB(NOW(), INTERVAL ? HOUR))`,
-          [patientId, p.device || 'MANUAL', hr, spo2, temp.toFixed(1), i * 2]
-        );
+  for (const pd of patients) {
+    const [p, c] = await Patient.findOrCreate({ where: { full_name: pd.full_name, doctor_id: doc.id }, defaults: { ...pd, doctor_id: doc.id } });
+    if (c) {
+      for (let i = 12; i >= 0; i--) {
+        const hr = 72 + Math.floor(Math.random() * 30) - 10;
+        const spo2 = 95 + Math.floor(Math.random() * 5);
+        const temp = (36.4 + (Math.random() * 1.5)).toFixed(1);
+        const d = new Date(); d.setHours(d.getHours() - i * 2);
+        await VitalReading.create({ patient_id: p.id, device_id: pd.device_id || 'MANUAL', heart_rate: hr, spo2, temperature: temp, recorded_at: d });
       }
-
-      // Add an alert
-      await db.query(
-        `INSERT INTO health_alerts (patient_id, alert_type, message, is_read) VALUES (?, ?, ?, ?)`,
-        [patientId, 'VITAL_ABNORMAL', `Elevated heart rate detected for ${p.name}: ${72 + 20} bpm`, false]
-      );
-
-      console.log(`[SEED] Patient created: ${p.name}`);
+      await HealthAlert.create({ patient_id: p.id, alert_type: 'VITAL_ABNORMAL', message: `${pd.full_name}: Elevated heart rate detected — 105 bpm`, is_read: false });
+      console.log(`[SEED] Patient created: ${pd.full_name}`);
     }
   }
-
-  console.log('[SEED] Seeding complete!');
+  console.log('[SEED] Done!');
   process.exit(0);
 }
 
-seed().catch(err => {
-  console.error('[SEED] Error:', err.message);
-  process.exit(1);
-});
+seed().catch(e => { console.error('[SEED] Error:', e.message); process.exit(1); });

@@ -1,0 +1,237 @@
+<%- include('../partials/head') %>
+<% const currentPage = 'patients'; %>
+
+<div class="flex h-full">
+  <%- include('../partials/sidebar') %>
+  <div class="flex-1 flex flex-col min-w-0 lg:ml-64">
+    <%- include('../partials/topbar') %>
+    <main class="flex-1 p-4 sm:p-6 space-y-5 overflow-auto">
+
+      <!-- Breadcrumb -->
+      <div class="flex items-center gap-2 text-sm text-slate-500">
+        <a href="/patients" class="hover:text-primary-600">Patients</a>
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+        <a href="/patients/<%= patient.id %>" class="hover:text-primary-600"><%= patient.full_name %></a>
+        <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+        <span class="text-slate-800 font-medium">Live Monitor</span>
+      </div>
+
+      <!-- Connection Status -->
+      <div class="flex items-center justify-between bg-white rounded-xl border border-slate-200 px-5 py-3">
+        <div class="flex items-center gap-3">
+          <span id="conn-dot" class="relative flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-slate-400"></span>
+          </span>
+          <span id="conn-status" class="text-sm font-medium text-slate-500">Connecting...</span>
+        </div>
+        <div class="flex items-center gap-2 text-sm text-slate-500">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8.288 15.038a5.25 5.25 0 0 1 7.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12.53 18.22l-.53.53-.53-.53a.75.75 0 0 1 1.06 0Z"/></svg>
+          Device: <span class="font-mono font-semibold text-slate-800"><%= patient.device_id || 'None' %></span>
+        </div>
+        <p class="text-xs text-slate-400">Last update: <span id="last-update">--</span></p>
+      </div>
+
+      <!-- Live Vital Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <!-- Heart Rate -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center">
+                <svg class="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"/></svg>
+              </div>
+              <span class="text-sm font-medium text-slate-600">Heart Rate</span>
+            </div>
+            <span id="hr-badge" class="vital-badge vital-normal">Normal</span>
+          </div>
+          <div class="flex items-end gap-1">
+            <span id="live-hr" class="text-4xl font-bold text-slate-900">--</span>
+            <span class="text-sm text-slate-400 mb-1">bpm</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Normal: 60–100 bpm</p>
+        </div>
+
+        <!-- SpO2 -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                <svg class="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941"/></svg>
+              </div>
+              <span class="text-sm font-medium text-slate-600">SpO2</span>
+            </div>
+            <span id="spo2-badge" class="vital-badge vital-normal">Normal</span>
+          </div>
+          <div class="flex items-end gap-1">
+            <span id="live-spo2" class="text-4xl font-bold text-slate-900">--</span>
+            <span class="text-sm text-slate-400 mb-1">%</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Normal: 97–100%</p>
+        </div>
+
+        <!-- Temperature -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 bg-orange-50 rounded-lg flex items-center justify-center">
+                <svg class="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z"/></svg>
+              </div>
+              <span class="text-sm font-medium text-slate-600">Temperature</span>
+            </div>
+            <span id="temp-badge" class="vital-badge vital-normal">Normal</span>
+          </div>
+          <div class="flex items-end gap-1">
+            <span id="live-temp" class="text-4xl font-bold text-slate-900">--</span>
+            <span class="text-sm text-slate-400 mb-1">°C</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Normal: 36.1–37.2°C</p>
+        </div>
+      </div>
+
+      <!-- Live Chart -->
+      <div class="bg-white rounded-xl border border-slate-200 p-5">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="font-semibold text-slate-900">Real-time Vitals Chart</h3>
+          <div class="flex items-center gap-4 text-xs">
+            <span class="flex items-center gap-1"><span class="w-3 h-1 bg-red-500 inline-block rounded"></span> Heart Rate</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-1 bg-blue-500 inline-block rounded"></span> SpO2</span>
+            <span class="flex items-center gap-1"><span class="w-3 h-1 bg-orange-500 inline-block rounded"></span> Temp ×10</span>
+          </div>
+        </div>
+        <canvas id="vitalChart" height="100"></canvas>
+      </div>
+
+      <!-- Live Alert Feed -->
+      <div class="bg-white rounded-xl border border-slate-200">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-slate-100">
+          <h3 class="font-semibold text-slate-900">Live Alert Feed</h3>
+          <button onclick="document.getElementById('alert-feed').innerHTML=''" class="text-xs text-slate-400 hover:text-slate-600">Clear</button>
+        </div>
+        <div id="alert-feed" class="divide-y divide-slate-100 max-h-48 overflow-y-auto">
+          <p class="p-4 text-sm text-slate-400 text-center">Waiting for device data...</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Socket.IO + Chart.js -->
+<script src="/socket.io/socket.io.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+const PATIENT_ID = <%= patient.id %>;
+const MAX_POINTS = 30;
+
+// ── Chart setup ───────────────────────────────────────────────────────────────
+const ctx = document.getElementById('vitalChart').getContext('2d');
+const chart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [
+      { label: 'Heart Rate', data: [], borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.08)', tension: 0.4, pointRadius: 3, borderWidth: 2 },
+      { label: 'SpO2',       data: [], borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.08)', tension: 0.4, pointRadius: 3, borderWidth: 2 },
+      { label: 'Temp ×10',   data: [], borderColor: '#f97316', backgroundColor: 'rgba(249,115,22,0.08)', tension: 0.4, pointRadius: 3, borderWidth: 2 }
+    ]
+  },
+  options: {
+    responsive: true,
+    animation: { duration: 300 },
+    scales: {
+      x: { ticks: { maxTicksLimit: 8, font: { size: 10 } } },
+      y: { min: 30, max: 120, ticks: { font: { size: 10 } } }
+    },
+    plugins: { legend: { display: false } }
+  }
+});
+
+// ── Load historical data ──────────────────────────────────────────────────────
+fetch(`/api/patients/${PATIENT_ID}/vitals`)
+  .then(r => r.json())
+  .then(({ data }) => {
+    if (!data) return;
+    const slice = [...data].reverse().slice(-MAX_POINTS);
+    slice.forEach(v => {
+      const t = new Date(v.recorded_at).toLocaleTimeString();
+      chart.data.labels.push(t);
+      chart.data.datasets[0].data.push(v.heart_rate);
+      chart.data.datasets[1].data.push(v.spo2);
+      chart.data.datasets[2].data.push(parseFloat(v.temperature) * 10);
+    });
+    if (slice.length > 0) {
+      const last = slice[slice.length - 1];
+      updateCards(last.heart_rate, last.spo2, parseFloat(last.temperature));
+    }
+    chart.update();
+  });
+
+// ── Badge helper ──────────────────────────────────────────────────────────────
+function setBadge(id, label, isOk) {
+  const el = document.getElementById(id);
+  el.textContent = label;
+  el.className = 'vital-badge ' + (isOk ? 'vital-normal' : 'vital-critical');
+}
+
+function updateCards(hr, spo2, temp) {
+  if (hr != null)   { document.getElementById('live-hr').textContent   = hr;          setBadge('hr-badge', hr > 100 || hr < 50 ? 'Abnormal' : 'Normal', !(hr > 100 || hr < 50)); }
+  if (spo2 != null) { document.getElementById('live-spo2').textContent = spo2;        setBadge('spo2-badge', spo2 < 95 ? 'Low' : 'Normal', spo2 >= 95); }
+  if (temp != null) { document.getElementById('live-temp').textContent = temp.toFixed(1); setBadge('temp-badge', temp >= 38 || temp < 35 ? 'Abnormal' : 'Normal', !(temp >= 38 || temp < 35)); }
+  document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+}
+
+function appendAlert(msg, isOk) {
+  const feed = document.getElementById('alert-feed');
+  if (feed.querySelector('p')) feed.innerHTML = '';
+  const div = document.createElement('div');
+  div.className = `flex items-start gap-3 px-5 py-3 ${isOk ? '' : 'bg-red-50'}`;
+  div.innerHTML = `<span class="w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${isOk ? 'bg-green-500' : 'bg-red-500'}"></span><span class="text-sm text-slate-700">${msg}</span><span class="ml-auto text-xs text-slate-400">${new Date().toLocaleTimeString()}</span>`;
+  feed.prepend(div);
+}
+
+// ── Socket.IO connection ──────────────────────────────────────────────────────
+const socket = io();
+const dot    = document.getElementById('conn-dot');
+const status = document.getElementById('conn-status');
+
+socket.on('connect', () => {
+  socket.emit('join:patient', PATIENT_ID);
+  dot.innerHTML = '<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>';
+  status.textContent = 'Connected — waiting for device data';
+  status.className = 'text-sm font-medium text-green-600';
+});
+
+socket.on('disconnect', () => {
+  dot.innerHTML = '<span class="relative inline-flex rounded-full h-3 w-3 bg-slate-400"></span>';
+  status.textContent = 'Disconnected';
+  status.className = 'text-sm font-medium text-red-500';
+});
+
+socket.on('vital:new', (data) => {
+  if (data.patientId !== PATIENT_ID) return;
+
+  // Update cards
+  updateCards(data.heartRate, data.spo2, data.temperature);
+  status.textContent = 'Live — receiving data from device';
+  status.className = 'text-sm font-medium text-green-600';
+
+  // Push to chart
+  const t = new Date(data.recordedAt).toLocaleTimeString();
+  chart.data.labels.push(t);
+  chart.data.datasets[0].data.push(data.heartRate);
+  chart.data.datasets[1].data.push(data.spo2);
+  chart.data.datasets[2].data.push(data.temperature * 10);
+  if (chart.data.labels.length > MAX_POINTS) {
+    chart.data.labels.shift();
+    chart.data.datasets.forEach(d => d.shift());
+  }
+  chart.update('none');
+
+  // Alert feed
+  const ok = data.alertsCount === 0;
+  appendAlert(ok ? `Vitals within normal range — HR: ${data.heartRate} bpm, SpO2: ${data.spo2}%, Temp: ${data.temperature}°C` : `${data.alertsCount} alert(s) generated — HR: ${data.heartRate} bpm, SpO2: ${data.spo2}%, Temp: ${data.temperature}°C`, ok);
+});
+</script>
+
+<%- include('../partials/footer') %>

@@ -1,94 +1,97 @@
+'use strict';
 require('dotenv').config();
-const express = require('express');
-const session = require('express-session');
-const flash = require('connect-flash');
-const cookieParser = require('cookie-parser');
-const morgan = require('morgan');
-const path = require('path');
+const express        = require('express');
+const http           = require('http');
+const { Server }     = require('socket.io');
+const session        = require('express-session');
+const flash          = require('connect-flash');
+const cookieParser   = require('cookie-parser');
+const morgan         = require('morgan');
+const path           = require('path');
 const methodOverride = require('method-override');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+const { syncDatabase } = require('./models');
+const { loadDoctor }   = require('./middleware/auth');
 
-// View engine
+const app    = express();
+const server = http.createServer(app);
+const io     = new Server(server, { cors: { origin: '*' } });
+
+// ── View engine ───────────────────────────────────────────────────────────────
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
-// Middleware
-app.use(morgan('dev'));
+// ── Core middleware ────────────────────────────────────────────────────────────
+app.use(morgan(process.env.NODE_ENV === 'production' ? 'combined' : 'dev'));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Sessions
+// ── Session ───────────────────────────────────────────────────────────────────
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'medico-session-secret',
-  resave: false,
+  secret:            process.env.SESSION_SECRET || 'medico-secret',
+  resave:            false,
   saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-  }
+  cookie: { httpOnly: true, maxAge: 7 * 24 * 60 * 60 * 1000 }
 }));
 
-// Flash messages
+// ── Flash + template globals ──────────────────────────────────────────────────
 app.use(flash());
-
-// Load doctor into all views
-const { loadDoctor } = require('./middleware/auth');
 app.use(loadDoctor);
+app.use((req, res, next) => { res.locals.path = req.path; next(); });
 
-// Global template vars
-app.use((req, res, next) => {
-  res.locals.path = req.path;
-  next();
-});
+// ── Make io accessible in controllers ─────────────────────────────────────────
+app.set('io', io);
 
-// Routes
-const authRouter = require('./routes/auth');
-const dashboardRouter = require('./routes/dashboard');
-const patientsRouter = require('./routes/patients');
-const vitalsRouter = require('./routes/vitals');
-const alertsRouter = require('./routes/alerts');
-const reportsRouter = require('./routes/reports');
-const profileRouter = require('./routes/profile');
+// ── Web routes ─────────────────────────────────────────────────────────────────
+app.use('/auth',     require('./routes/auth'));
+app.use('/dashboard', require('./routes/dashboard'));
+app.use('/patients', require('./routes/patients'));
+app.use('/alerts',   require('./routes/alerts'));
+app.use('/reports',  require('./routes/reports'));
+app.use('/profile',  require('./routes/profile'));
+app.use('/',         require('./routes/vitals'));   // /patients/:id/vitals + /api/iot/vitals
+app.use('/',         require('./routes/iot'));       // /patients/:id/live
 
-app.use('/auth', authRouter);
-app.use('/dashboard', dashboardRouter);
-app.use('/patients', patientsRouter);
-app.use('/', vitalsRouter);        // handles /patients/:id/vitals and /api/iot/vitals
-app.use('/alerts', alertsRouter);
-app.use('/reports', reportsRouter);
-app.use('/profile', profileRouter);
+// ── REST API (JWT) ────────────────────────────────────────────────────────────
+app.use('/api', require('./routes/api'));
 
-// Root redirect
+// ── Root redirect ─────────────────────────────────────────────────────────────
 app.get('/', (req, res) => {
-  if (req.session.doctorId) return res.redirect('/dashboard');
-  res.redirect('/auth/login');
+  res.redirect(req.session.doctorId ? '/dashboard' : '/auth/login');
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).render('auth/login', {
-    title: 'Page Not Found',
-    error: ['Page not found'],
-    success: [],
-    values: {}
+// ── Socket.IO rooms ───────────────────────────────────────────────────────────
+io.on('connection', socket => {
+  socket.on('join:patient', patientId => {
+    socket.join(`patient:${patientId}`);
+  });
+  socket.on('join:doctor', doctorId => {
+    socket.join(`doctor:${doctorId}`);
   });
 });
 
-// Error handler
+// ── Global error handler ──────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).send('Internal Server Error');
+  console.error('[ERROR]', err.message);
+  if (req.path.startsWith('/api/')) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+  req.flash('error', err.message || 'Something went wrong');
+  res.redirect('back');
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`\n  Medico server running`);
-  console.log(`  Local: http://localhost:${PORT}`);
-  console.log(`  Env:   ${process.env.NODE_ENV || 'development'}\n`);
+// ── Start ─────────────────────────────────────────────────────────────────────
+const PORT = process.env.PORT || 3000;
+syncDatabase().then(() => {
+  server.listen(PORT, '0.0.0.0', () => {
+    console.log(`\n  Medico running on http://localhost:${PORT}`);
+    console.log(`  REST API:  http://localhost:${PORT}/api`);
+    console.log(`  IoT POST:  http://localhost:${PORT}/api/iot/vitals`);
+    console.log(`  Env: ${process.env.NODE_ENV || 'development'}\n`);
+  });
 });
 
-module.exports = app;
+module.exports = { app, server, io };
