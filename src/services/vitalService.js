@@ -2,6 +2,7 @@
 const { Op } = require('sequelize');
 const { VitalReading, Patient, HealthAlert, AIAnalysisResult } = require('../models');
 const diseaseService = require('./diseaseService');
+const mlService      = require('./mlService');
 
 // ── Alert threshold constants (matching Java VitalService) ────────────────────
 const THRESHOLDS = {
@@ -37,8 +38,10 @@ class VitalService {
       temperature
     });
 
-    // 3. Generate threshold alerts
-    const alerts = await this._generateAlerts(patient, { heartRate, spo2, temperature });
+    // Trigger ML retrain asynchronously (fire and forget)
+    mlService.triggerRetrain().catch(() => {});
+
+    // 3. Generate threshold alerts    const alerts = await this._generateAlerts(patient, { heartRate, spo2, temperature });
 
     // 4. Run disease matching & store AI analysis
     const matches = diseaseService.matchDiseases({ heartRate, spo2, temperature: parseFloat(temperature) });

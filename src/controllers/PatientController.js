@@ -2,7 +2,7 @@
 const { body, validationResult } = require('express-validator');
 const patientService = require('../services/patientService');
 const diseaseService = require('../services/diseaseService');
-
+const mlService      = require('../services/mlService');
 // ── Validation rules ──────────────────────────────────────────────────────────
 exports.createRules = [
   body('full_name').notEmpty().withMessage('Full name is required'),
@@ -62,8 +62,15 @@ exports.show = async (req, res) => {
 
   const latest = vitals[0];
   let diseaseMatches = [];
+  let mlPredictions  = null;
   if (latest) {
     diseaseMatches = diseaseService.matchDiseases({
+      heartRate: latest.heart_rate,
+      spo2: latest.spo2,
+      temperature: latest.temperature
+    });
+    // ML prediction (non-blocking — null if service unavailable)
+    mlPredictions = await mlService.predict({
       heartRate: latest.heart_rate,
       spo2: latest.spo2,
       temperature: latest.temperature
@@ -72,7 +79,7 @@ exports.show = async (req, res) => {
 
   res.render('patients/show', {
     title: patient.full_name,
-    patient, vitals, alerts, diseases, analyses, diseaseMatches,
+    patient, vitals, alerts, diseases, analyses, diseaseMatches, mlPredictions,
     success: req.flash('success'), error: req.flash('error')
   });
 };

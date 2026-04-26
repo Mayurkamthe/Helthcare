@@ -36,6 +36,10 @@ services:
         generateValue: true
       - key: SESSION_SECRET
         generateValue: true
+      - key: ML_SERVICE_URL
+        value: https://medico-ml.onrender.com
+      - key: ML_API_KEY
+        value: medico-ml-key
       - key: IOT_API_KEY
         value: medico-iot-key-2024
 
